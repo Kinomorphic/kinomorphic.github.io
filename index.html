@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kinomorphic Research</title>
+<meta name="description" content="Kinomorphic Research: developing the tools and language to interpret what neural networks learn over training, and how.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='14' fill='%23EEF0F3'/%3E%3Cg fill='%231A1D4A' transform='translate(-1 0)'%3E%3Crect x='24.5' y='12' width='11' height='76'/%3E%3Cpath d='M33 50H47L77 12H63Z'/%3E%3Cpath d='M33 50H47L77 88H63Z'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ground: #EEF0F3;
+  --ink: #1A1D4A;
+  --muted: #565B78;
+  --accent: #B8730A;
+  --tone-early: #8F91A7;   /* the K: early training, every frequency carrying some weight */
+  --tone-late: #BFC2CE;    /* the R: late training, most of it faded */
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #13153A;
+    --ink: #E6EAFB;
+    --muted: #A2A8CC;
+    --accent: #F2B13A;
+    --tone-early: #727591;
+    --tone-late: #414464;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #13153A;
+  --ink: #E6EAFB;
+  --muted: #A2A8CC;
+  --accent: #F2B13A;
+  --tone-early: #727591;
+  --tone-late: #414464;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "STIX Two Text", "Times New Roman", Times, serif;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 25rem) minmax(0, 33rem);
+  justify-content: center;
+  align-items: center;
+  gap: clamp(2rem, 7vw, 6.5rem);
+  padding: clamp(1.5rem, 5vw, 4rem);
+}
+.mark { display: block; width: 8.5rem; height: auto; }
+.mark .early { fill: var(--tone-early); }
+.mark .late { fill: var(--tone-late); }
+.mark .band { fill: var(--ink); }
+h1 {
+  margin: 1.6rem 0 0;
+  font-weight: 400;
+  font-size: clamp(2.1rem, 4.6vw, 3.1rem);
+  line-height: 1.05;
+  letter-spacing: -0.012em;
+}
+.statement { margin: 1.1rem 0 0; font-size: 1.3rem; line-height: 1.42; text-wrap: pretty; }
+.current { margin: 1.1rem 0 0; color: var(--muted); text-wrap: pretty; }
+.cloud { margin: 0; }
+.cloud canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.cloud canvas:active { cursor: grabbing; }
+.cloud canvas:focus-visible, .cloud button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.cloud figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  color: var(--muted);
+  font-size: 1rem;
+}
+.cloud figcaption span { flex: 1 1 16rem; }
+.cloud button {
+  min-height: 44px;
+  padding: 0.4rem 1.2rem;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.cloud button:hover { background: var(--ink); color: var(--ground); }
+@media (max-width: 52rem) {
+  .page { grid-template-columns: minmax(0, 1fr); align-items: start; align-content: start; gap: 1.5rem; }
+  .cloud { max-width: 30rem; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <div>
+    <svg class="mark" viewBox="24.5 12 116.3 76" role="img" aria-label="KR">
+      <defs>
+        <clipPath id="kr-shape">
+          <rect x="24.5" y="12" width="11" height="76"/>
+          <path d="M33 50H47L77 12H63Z"/>
+          <path d="M33 50H47L77 88H63Z"/>
+          <rect x="88.3" y="12" width="11" height="76"/>
+          <path clip-rule="evenodd" d="M93.8 12H115.8A21.75 21.75 0 0 1 115.8 55.5H93.8ZM99.3 23H115.8A10.75 10.75 0 0 1 115.8 44.5H99.3Z"/>
+          <path d="M96.8 50H110.8L140.8 88H126.8Z"/>
+        </clipPath>
+      </defs>
+      <g clip-path="url(#kr-shape)">
+        <rect class="early" x="24" y="12" width="58" height="76"/>
+        <rect class="late" x="84" y="12" width="58" height="76"/>
+        <rect class="band" x="46" y="32" width="92" height="2"/>
+        <rect class="band" x="36" y="60" width="98" height="2"/>
+        <rect class="band" x="38" y="68" width="98" height="4"/>
+        <rect class="band" x="50" y="78" width="86" height="2"/>
+      </g>
+    </svg>
+    <h1>Kinomorphic Research</h1>
+    <p class="statement">Developing tools to interpret learning in neural networks.</p>
+    <p class="current">
+      <span style="font-style: italic;">Current work:</span><br/>
+      grokking dynamics on small toy models<br/>
+      <span style="font-family:'Courier New';">miscope</span>, a platform for training, analyzing, and interpreting models
+    </p>
+  </div>
+
+  <figure class="cloud">
+    <canvas tabindex="0" role="application" aria-roledescription="rotatable point cloud" aria-label="A cloud of points that looks random when seen flat, then turns to show level stripes with a letter K missing from them. Use the arrow keys to turn it."></canvas>
+    <figcaption>
+      <span>Early inspiration for thinking about patterns in data. Points from RANDU, a 1960s random number generator, with a K carved out. Drag to turn it.</span>
+      <button type="button">Replay</button>
+    </figcaption>
+  </figure>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const canvas = document.querySelector('.cloud canvas');
+  const button = document.querySelector('.cloud button');
+  const ctx = canvas.getContext('2d');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const readInk = () => getComputedStyle(root).getPropertyValue('--ink').trim();
+  let ink = readInk();
+
+  /* ---------- the points: consecutive triples from RANDU ---------- */
+  const NP = 2400, MOD = 2147483648;
+  const pts = new Float32Array(NP * 3);
+  (() => {
+    let x = 1;
+    const next = () => (x = (65539 * x) % MOD) / MOD;
+    for (let i = 0; i < 30; i++) next();
+    for (let i = 0; i < NP * 3; i++) pts[i] = next() - 0.5;
+  })();
+
+  /* ---------- small vector helpers ---------- */
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const unit = a => { const l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
+  const turn = (v, k, a) => {             // rotate v about unit axis k by angle a
+    const c = Math.cos(a), s = Math.sin(a), kv = cross(k, v), d = dot(k, v) * (1 - c);
+    return [v[0] * c + kv[0] * s + k[0] * d, v[1] * c + kv[1] * s + k[1] * d, v[2] * c + kv[2] * s + k[2] * d];
+  };
+
+  /* ---------- the two views ----------
+     Every RANDU triple satisfies 9x - 6y + z = integer, so the points lie on parallel
+     planes with this normal. The opening view looks straight down one axis, where they
+     pass for noise. The end view looks along the planes, rolled so they run level. */
+  const NORMAL = unit([9, -6, 1]);
+  const F0 = [1, 0, 0], R0 = [0, 1, 0], U0 = [0, 0, 1];
+  const NEAR = unit([F0[0] - NORMAL[0] * dot(F0, NORMAL), F0[1] - NORMAL[1] * dot(F0, NORMAL), F0[2] - NORMAL[2] * dot(F0, NORMAL)]);
+  const [AXIS, ANGLE] = (() => {
+    const f1 = turn(NEAR, NORMAL, 0.6);
+    let best = null;
+    for (const sgn of [1, -1]) {
+      const u1 = [NORMAL[0] * sgn, NORMAL[1] * sgn, NORMAL[2] * sgn], r1 = unit(cross(u1, f1));
+      const b0 = [R0, U0, F0], b1 = [r1, u1, f1], m = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+      for (let k = 0; k < 3; k++) for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) m[i][j] += b1[k][i] * b0[k][j];
+      const ang = Math.acos(Math.max(-1, Math.min(1, (m[0][0] + m[1][1] + m[2][2] - 1) / 2)));
+      const ax = unit([m[2][1] - m[1][2], m[0][2] - m[2][0], m[1][0] - m[0][1]]);
+      if (!best || ang < best[1]) best = [ax, ang];
+    }
+    return best;
+  })();
+  let r, u, f;
+  function pose(s) { r = turn(R0, AXIS, s * ANGLE); u = turn(U0, AXIS, s * ANGLE); f = turn(F0, AXIS, s * ANGLE); }
+
+  /* ---------- carve the K: drop every point that lands inside it in the end view ---------- */
+  const gone = new Uint8Array(NP);
+  (() => {
+    const Q = 256, KS = 1.1, m = document.createElement('canvas');
+    m.width = Q; m.height = Q;
+    const mc = m.getContext('2d');
+    const poly = p => { mc.beginPath(); p.forEach((q, i) => i ? mc.lineTo(q[0] * Q, q[1] * Q) : mc.moveTo(q[0] * Q, q[1] * Q)); mc.fill(); };
+    poly([[0.245, 0.12], [0.355, 0.12], [0.355, 0.88], [0.245, 0.88]]);
+    poly([[0.33, 0.50], [0.47, 0.50], [0.77, 0.12], [0.63, 0.12]]);
+    poly([[0.33, 0.50], [0.47, 0.50], [0.77, 0.88], [0.63, 0.88]]);
+    const a = mc.getImageData(0, 0, Q, Q).data;
+    pose(1);
+    for (let i = 0; i < NP; i++) {
+      const x = pts[3 * i], y = pts[3 * i + 1], z = pts[3 * i + 2];
+      const kx = Math.floor((0.5125 + (x * r[0] + y * r[1] + z * r[2]) / KS) * Q);
+      const ky = Math.floor((0.5 - (x * u[0] + y * u[1] + z * u[2]) / KS) * Q);
+      if (kx >= 0 && ky >= 0 && kx < Q && ky < Q && a[(ky * Q + kx) * 4 + 3] > 127) gone[i] = 1;
+    }
+  })();
+
+  /* ---------- drawing ---------- */
+  function draw(count) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const S = Math.max(2, Math.round(canvas.getBoundingClientRect().width * dpr));
+    if (canvas.width !== S) { canvas.width = S; canvas.height = S; }
+    const sc = S * 0.60, base = Math.max(1, S / 520 * 1.9);
+    ctx.clearRect(0, 0, S, S);
+    ctx.fillStyle = ink;
+    ctx.globalAlpha = 0.8;
+    for (let i = 0; i < count; i++) {
+      if (gone[i]) continue;
+      const x = pts[3 * i], y = pts[3 * i + 1], z = pts[3 * i + 2];
+      const d = base * (1 + 0.3 * (x * f[0] + y * f[1] + z * f[2]));
+      ctx.fillRect(S / 2 + (x * r[0] + y * r[1] + z * r[2]) * sc - d / 2, S / 2 - (x * u[0] + y * u[1] + z * u[2]) * sc - d / 2, d, d);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---------- the opening sequence: plot flat, hold, turn ---------- */
+  const PLOT = 1100, HOLD = 700, TURN = 3600;
+  const ease = v => v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2;
+  let raf = 0, t0, live = false, played = false;
+  function frame(now) {
+    const t = now - t0;
+    if (t < PLOT) { pose(0); draw(Math.floor(NP * t / PLOT)); }
+    else if (t < PLOT + HOLD) { pose(0); draw(NP); }
+    else if (t < PLOT + HOLD + TURN) { pose(ease((t - PLOT - HOLD) / TURN)); draw(NP); }
+    else { pose(1); draw(NP); live = true; return; }
+    raf = requestAnimationFrame(frame);
+  }
+  function start() { cancelAnimationFrame(raf); played = true; live = false; t0 = performance.now(); raf = requestAnimationFrame(frame); }
+  function settle() { cancelAnimationFrame(raf); played = true; live = true; pose(1); draw(NP); }
+
+  /* ---------- turning it by hand ---------- */
+  function nudge(ax, ay) {
+    if (!played) return;
+    if (!live) { cancelAnimationFrame(raf); live = true; }
+    if (ax) { r = turn(r, u, ax); f = turn(f, u, ax); }
+    if (ay) { u = turn(u, r, ay); f = turn(f, r, ay); }
+    r = unit(r); u = unit(cross(f, r)); f = unit(cross(r, u));
+    draw(NP);
+  }
+  let drag = null;
+  canvas.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag[0], dy = e.clientY - drag[1];
+    drag = [e.clientX, e.clientY];
+    nudge(dx * 0.008, e.pointerType === 'touch' ? 0 : dy * 0.008);
+  });
+  const release = () => { drag = null; };
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
+  canvas.addEventListener('keydown', e => {
+    const k = { ArrowLeft: [-0.1, 0], ArrowRight: [0.1, 0], ArrowUp: [0, -0.1], ArrowDown: [0, 0.1] }[e.key];
+    if (!k) return;
+    e.preventDefault();
+    nudge(k[0], k[1]);
+  });
+
+  /* ---------- wiring ---------- */
+  if (reduce.matches) button.textContent = 'Play';
+  button.addEventListener('click', () => { button.textContent = 'Replay'; start(); });
+  const first = () => { if (!played) { reduce.matches ? settle() : start(); } };
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); first(); } }, { threshold: 0.5 });
+    io.observe(canvas);
+  } else first();
+  let lastW = 0;
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      const w = Math.round(canvas.getBoundingClientRect().width);
+      if (played && live && lastW && w !== lastW) draw(NP);
+      lastW = w;
+    }).observe(canvas);
+  }
+  const retheme = () => { ink = readInk(); if (played && live) draw(NP); };
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme);
+  new MutationObserver(retheme).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>
+</body>
+</html>
